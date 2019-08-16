@@ -3,100 +3,51 @@ package com.example.ideaflatmate;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 public class SignupActivity extends AppCompatActivity {
 
-    private FirebaseAuth mAuth;
-    private EditText UEmail, Upassword, ConfirmPassword, UserName;
-    private Button SignUpButton;
-    private FirebaseDatabase mDatabase;
-    private DatabaseReference mReference;
-    private String name, email, password, confrimPassword;
-
-
+    private EditText txtEmailSignup;
+    private EditText txtPasswordSignup;
+    private FirebaseAuth firebaseAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_singup);
+        setContentView(R.layout.activity_signup);
+        txtEmailSignup = findViewById(R.id.txtEmailSignup);
+        txtPasswordSignup = findViewById(R.id.txtPasswordSignup);
+        firebaseAuth = FirebaseAuth.getInstance();
+    }
+    public void btnUserSignup_Click(View v){
 
-        mAuth = FirebaseAuth.getInstance();
-        mDatabase = FirebaseDatabase.getInstance();
-
-
-
-        UserName = findViewById(R.id.UserNameEditTextSignPage);
-        UEmail = findViewById(R.id.EmailEditTextLoginSignPage);
-        Upassword = findViewById(R.id.PasswordEditTextSignPage);
-        ConfirmPassword = findViewById(R.id.Conpassword);
-        SignUpButton = findViewById(R.id.SignUpButtonSignPage);
-
-
-        SignUpButton.setOnClickListener(new View.OnClickListener() {
+        final ProgressDialog progressDialog = ProgressDialog.show(SignupActivity.this, "Please waiting...", "Processing...",true);
+        (firebaseAuth.createUserWithEmailAndPassword(txtEmailSignup.getText().toString(),txtPasswordSignup.getText().toString())).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
-            public void onClick(View view) {
-                name = UserName.getText().toString();
-                email = UEmail.getText().toString();
-                password = Upassword.getText().toString();
-                confrimPassword = ConfirmPassword.getText().toString();
-                if (name.isEmpty()|| email.isEmpty()||password.isEmpty())
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                progressDialog.dismiss();
+
+                if (task.isSuccessful()){
+                    Toast.makeText(SignupActivity.this, "Sign up successful", Toast.LENGTH_SHORT).show();
+                    Intent i = new Intent (SignupActivity.this, LoginActivity.class);
+                    startActivity(i);
+                }
+                else
                 {
-                    Toast.makeText(SignupActivity.this,"Please fill up all the entries"
-                    , Toast.LENGTH_SHORT).show();
-                }else
-                    if (password.equals(confrimPassword))
-                    {
-                        mAuth.createUserWithEmailAndPassword(email,password)
-                                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<AuthResult> task) {
-                                        if(task.isSuccessful())
-                                        {
-                                            //send data to database
-                                            mReference = mDatabase.getReference(mAuth.getUid());
-                                            UserProfile userProfile = new UserProfile(name,email);
-                                            mReference.setValue(userProfile);
-                                            Toast.makeText(SignupActivity.this,"sign up successful"
-                                                    , Toast.LENGTH_SHORT).show();
-
-                                        }
-                                    }
-                                });
-
-
-                    }else {
-
-                        Toast.makeText(SignupActivity.this,"Both password should be same"
-                                , Toast.LENGTH_SHORT).show();
-                    }
-
-
-
-
-
-
-
-
+                    Log.e("ERROR",task.getException().toString());
+                    Toast.makeText(SignupActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         });
-
-
-
-
     }
 }
